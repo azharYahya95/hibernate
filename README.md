@@ -67,8 +67,42 @@ public static void main(String[]args){
 }
 ```
 - hibernate.cfg.xml - default configure file call by Hibernate
-#### 4. CRUD
-#### 5. Save Object
+
+#### 4. Primary Keys
+##### a. What is Primary Key
+- Uniquely index each row in a table
+- must be a unique value
+- cannot contain null value
+
+##### b. ID generation strategies
+|Name|Description|
+|---|---|
+|GenerationType.AUTO|Pick an appropriate strategy for the particular database|
+|GenerationType.IDENTITY|Assign primary keys using database identity column|
+|GenerationType.SEQUENCE|Assign primary keys using database sequence|
+|GenerationType.TABLE|Assign primary keys using an underlying database table to ensure uniqueness|
+
+*example code*
+
+```java
+import javax.persistence.*;
+
+@Entity
+@Table(name = "student")
+public class Student {
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "id")
+  private int id;
+}
+```
+- @GeneratedValue(strategy = GenerationType.IDENTITY) 
+  - follow how database setup
+  - most commonly used for MySQL AutoIncrement
+
+#### 5. CRUD
+##### a. Save Object
 - code example
   ```
   try{
