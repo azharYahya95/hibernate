@@ -68,7 +68,7 @@ public static void main(String[]args){
 ```
 - hibernate.cfg.xml - default configure file call by Hibernate
 
-#### 4. Primary Keys
+### 4. Primary Keys
 ##### a. What is Primary Key
 - Uniquely index each row in a table
 - must be a unique value
@@ -101,7 +101,7 @@ public class Student {
   - follow how database setup
   - most commonly used for MySQL AutoIncrement
 
-#### 5. CRUD
+### 5. CRUD
 ##### a. Save Object
 - code example
   ```
@@ -122,3 +122,73 @@ public class Student {
       factory.close();
   }
   ```
+##### b. Retrieve Object with Hibernate
+- can only retrieve it using Primary Key
+- if not found, it will return null
+- exampleCode
+  ```
+  //create Java Object
+  Student theStudent = new Student("Azhar", "Yahya", "azharusom95@gmail.com");
+  
+  //save it to database
+  session.save(theStudent);
+  
+  //retrieve/read datat using Primary Key
+  Student myStudent = session.get(Student.class, theStudent.getId());
+  ```
+##### c. Querying Object with Hibernate
+- can Query using HQL
+  - Similar in nature to SQL
+    - where, like, order by, join, in, etc
+-example
+    - Retrieve student using OR predicate
+      ```
+        List<Student> theStudents =
+                    session
+                          .createQuery("from Student s where s.lastName='Doe' OR s.firstName='Daffy'")
+                          .getResultList();
+      ```
+    - Retrieve student using LIKE predicate
+      ```
+        List<Student> theStudents =
+                    session
+                          .createQuery("from Student s where s.email LIKE '%luv2code.com'")
+                          .getResultList();
+      ```
+##### d. Update Object with Hibernate
+- Update one Student
+```
+int studentId = 1
+Student myStudent = session.get(Student.class, studentId);
+
+//update first Name to "Scooby"
+myStudent.setFirstName("Scooby");
+
+//commit the transaction
+session.getTransaction().commit();
+
+```
+- Update email for all Student
+```
+session.
+      createQuery("update Student set email='foo@gmail.com'")
+      .executeUpdate();
+```
+
+##### e. Delete Object with Hibernate
+```
+int student = 1;
+Student myStudent = session.get(Student.class, studentId);
+
+//delete the student
+session.delete(myStudent); 
+
+//commit the transaction
+session.getTransaction().commit();
+```
+- another way to delete
+```
+session
+    .createQuery("delete from Student where id=2")
+    .executeUpdate();
+```
