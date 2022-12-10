@@ -1,194 +1,176 @@
-## Hibernate Configuration
-### 1. What hibernate configuration file do
-- just tell how to setup the database
+## Hibernate Mapping
 
-### 2. Hibernate Annotations for Configuration
-#### a.  Map Class to Database Table
-- @Entity
-  - show that we gonna map to the database table
-- @Table
-  - show the name of the database table that we want to map to
+### Type of Mapping
+1. One to One
+2. One to Many, Many to One
+3. Many to Many
 
-```java
-import javax.persistence.Entity;
-import javax.persistence.Table;
+### Database Concept
+####  1. Primary Key and Foreign Key
+- Primary Key: identify a unique row in a table
+- Foreign key: 
+  - Link Table Together
+  - a field in 1 table refer to primary key in another table
 
-@Entity
-@Table(name = "student")
-public class Student{
-    //...
-}
+#### 2. Cascade
+- Apply same operation to related entities
+
+#### 3. Fetch Type
+- Eager - when fetch data, it will retrieve everything
+- Lazy - when fetch data, it will retrieve on request
+
+#### 4. Directional
+1. Uni-Directional
+2. Bi-Directional
+
+### Entity Lifecycle
+| Operations | Description                                                                     |
+|------------|---------------------------------------------------------------------------------|
+| Detach     | If entiy is attached, it is not associated with Hibernate session               |
+| Merge      | if Instances is detached from session,the merge will reattach to the session    |
+| Persist    | Transitions new instances to managed state. Next flush/commit will save in db   |
+| Remove     | Transitions managed entity to be removed. Next flush/commit will delete from db |
+| Refresh    | Reload / synch object with data from db. Prevents stale data.                   |
+
+```mermaid
+flowchart TD;
+New([New/Transient]);
+Persistent([Persistent/Managed]);
+Removed([Removed]);
+Detached([Detached]);
+New --save/persist--> Persistent;
+Persistent --rollback/new--> New;
+Persistent --commit/rollback/close--> Detached
+Detached --merge--> Persistent;
+Removed --persist/rollback--> Persistent;
+Persistent --delete/remove--> Removed
+Removed --commit--> New;
+Removed --rollback--> Detached
+Persistent --refresh--> Persistent;
 ```
 
-#### b. Map fields to database columns
-- @Id
-  - its Primary Key for class
-  - unique number
-- @Column(name="id")
-  - maps java fields to database column
-
-```java
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-
-@Entity
-@Table(name = "student")
-public class Student {
-
-  @Id
-  @Column(name="id")
-  private int id;
-  
-  @Column(name = "first_name")
-  private String firstName;
-}
-```
-
-### 3. Session Factory and Session
-|Class|Description|
-|---|---|
-|Session Factory|- Reads hibernate config file </br> - Create sessions object </br> - Only create once in your app|
-|Session|- Wraps a JDBC connection <br> - used to save/retrieve Object <br> retrieved from session Factory|
-
-```
-public static void main(String[]args){
-        SessionFactory factory = new Configuration()
-                                .configure("hibernate.cfg.xml")
-                                .addAnnotatedClass(Student.class)
-                                .buildSessionFactory();
-        Session session = factory.getCurrentSession();
-        try{
-            //use this session to save /retrieve Java Object
-        }finally{
-            factory.close();
-        }
-}
-```
-- hibernate.cfg.xml - default configure file call by Hibernate
-
-### 4. Primary Keys
-##### a. What is Primary Key
-- Uniquely index each row in a table
-- must be a unique value
-- cannot contain null value
-
-##### b. ID generation strategies
-|Name|Description|
-|---|---|
-|GenerationType.AUTO|Pick an appropriate strategy for the particular database|
-|GenerationType.IDENTITY|Assign primary keys using database identity column|
-|GenerationType.SEQUENCE|Assign primary keys using database sequence|
-|GenerationType.TABLE|Assign primary keys using an underlying database table to ensure uniqueness|
-
-*example code*
+### One-to-One (Uni-Directional)
+#### 1. Development process 
+STEP 1: Define Database Tables
+STEP 2:Create InstructorDetails class
 
 ```java
 import javax.persistence.*;
 
 @Entity
-@Table(name = "student")
-public class Student {
+@Table(name = "instructor_detail")
+public class InstructorDetail {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "id")
   private int id;
+  
+  @Column(name = "youtube_channel")
+  private String youtubeChannel;
+  
+  @Column(name = "hobby")
+  private String hobby;
 }
 ```
-- @GeneratedValue(strategy = GenerationType.IDENTITY) 
-  - follow how database setup
-  - most commonly used for MySQL AutoIncrement
+STEP 3: Create Instructor class
 
-### 5. CRUD
-##### a. Save Object
-- code example
-  ```
-  try{
-      //create a student object
-      Student tempStudent = new Student("Paul", "Wall", "paul@luv2code.com");
-      
-      //start transaction
-      session.beginTransaction();
-      
-      //save the student
-      session.save(tempStudent);
-      
-      //commit the transaction
-      session.getTransaction().commit();
-      
-  }finally{
-      factory.close();
+```java
+import javax.persistence.*;
+
+@Entity
+@Table(name = "instructor")
+public class Instructor {
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "id")
+  private int id;
+  
+  @Column(name = "first_name")
+  private String firstName;
+
+  @Column(name = "last_name")
+  private String lastName;
+
+  @Column(name = "email")
+  private String email;
+}
+```
+```java
+import javax.persistence.*;
+
+@Entity
+@Table(name = "instructor")
+public class Instructor {
+    //...
+    
+  @OneToOne
+  @JoinColumn(name = "instructor_detail_id")
+  private InstructorDetail instructorDetail;
+    //...
+}
+```
+Uni-Direction one to one
+```mermaid
+graph LR;
+Instructor --> InstructorDetail
+```
+
+STEP 4: CREATE MAIN APP
+
+```java
+public static void main(String[]args){
+    //create the Object
+        Instructor tempInstructor = new Instructor("Chad", "Darby", "darby@luv2code.com");
+        
+        InstructorDetail tempInstructorDetail = 
+            new InstructorDetail("http://www.luv2code.com/youtube","Luv 2 code!!!");
+        
+        //associate the objects
+        tempInstructor.setInstructorDetail(tempInstructorDetail);
+        
+        //start a transactions
+        session.beginTransactions();
+        session.save(tempInstructor);
+        
+        //commit a transaction
+        session.getTransaction().commit();
+}
+```
+
+#### 2. @OneToOne - Cascade Types
+
+| Cascade Type | Description                                                                         |
+|--------------|-------------------------------------------------------------------------------------|
+| PERSIST      | If entity is persisted/saved, related entity also be persisted                      |
+| REMOVE       | If entity removed/deleted, related entity also be deleted                           |
+| REFRESH      | If entity is refreshed, related entity will also be refreshed                       |
+| DETACH       | If entity is detached(not associated with session), related entity also be detached |
+| MERGE        | If entity is merged, then related entity also be merged                             |
+| ALL          | All of above cascade types                                                          |
+- By defaylt, no operations are cascaded
+- Configure Cascade Types
+  ```java
+  import javax.persistence.*;
+  
+  @Entity
+  @Table(name = "instructor")
+  public class Instructor {
+    // ...
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "instructor_detail_id")
+    private InstructorDetail  instructorDetail;
+  
+    // ...
   }
-  ```
-##### b. Retrieve Object with Hibernate
-- can only retrieve it using Primary Key
-- if not found, it will return null
-- exampleCode
-  ```
-  //create Java Object
-  Student theStudent = new Student("Azhar", "Yahya", "azharusom95@gmail.com");
   
-  //save it to database
-  session.save(theStudent);
-  
-  //retrieve/read datat using Primary Key
-  Student myStudent = session.get(Student.class, theStudent.getId());
   ```
-##### c. Querying Object with Hibernate
-- can Query using HQL
-  - Similar in nature to SQL
-    - where, like, order by, join, in, etc
--example
-    - Retrieve student using OR predicate
-      ```
-        List<Student> theStudents =
-                    session
-                          .createQuery("from Student s where s.lastName='Doe' OR s.firstName='Daffy'")
-                          .getResultList();
-      ```
-    - Retrieve student using LIKE predicate
-      ```
-        List<Student> theStudents =
-                    session
-                          .createQuery("from Student s where s.email LIKE '%luv2code.com'")
-                          .getResultList();
-      ```
-##### d. Update Object with Hibernate
-- Update one Student
-```
-int studentId = 1
-Student myStudent = session.get(Student.class, studentId);
-
-//update first Name to "Scooby"
-myStudent.setFirstName("Scooby");
-
-//commit the transaction
-session.getTransaction().commit();
-
-```
-- Update email for all Student
-```
-session.
-      createQuery("update Student set email='foo@gmail.com'")
-      .executeUpdate();
-```
-
-##### e. Delete Object with Hibernate
-```
-int student = 1;
-Student myStudent = session.get(Student.class, studentId);
-
-//delete the student
-session.delete(myStudent); 
-
-//commit the transaction
-session.getTransaction().commit();
-```
-- another way to delete
-```
-session
-    .createQuery("delete from Student where id=2")
-    .executeUpdate();
-```
+- CONFIGURE multiple cascade types
+  ```
+  @OneToOne(cascade={CascadeType.DETACH, 
+                    CascadeType.MERGE,
+                    CascadeType.PERSIST,
+                    CascadeType.REFRESH,
+                    CascadeType.REMOVE})
+  ```
