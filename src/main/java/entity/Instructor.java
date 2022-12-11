@@ -1,6 +1,8 @@
 package entity;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "instructor")
@@ -35,6 +37,11 @@ public class Instructor {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "instructor_detail_id")
     private InstructorDetail instructorDetail;
+
+    @OneToMany(mappedBy = "instructor",
+            cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+    private List<Course> course;
+
 
     public Instructor() {
 
@@ -85,6 +92,24 @@ public class Instructor {
 
     public void setInstructorDetail(InstructorDetail instructorDetail) {
         this.instructorDetail = instructorDetail;
+    }
+
+    public List<Course> getCourse() {
+        return course;
+    }
+
+    public void setCourse(List<Course> course) {
+        this.course = course;
+    }
+
+    public void add(Course tempCourse){
+        if(course == null){
+            course = new ArrayList<>();
+        }
+
+        course.add(tempCourse);
+
+        tempCourse.setInstructor(this);
     }
 
     @Override
