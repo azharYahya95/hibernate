@@ -1,63 +1,85 @@
-## Hibernate Mapping - Eager Loading vs Lazy Loading
+## Hibernate Mapping - One to Many Mapping Unidirectional Mapping
 
-<hr>
-
+### Overview
+- A course can have many reviews
+  - Uni Directional
 ```mermaid
 flowchart LR;
-I([Instructor]);C1([Course]);C2([Course]);C3([Course]);
-I --> C1;I --> C2; I --> C3;
+C([Course]);R1([Review]);R2([Review]);R3([Review]);
+C --> R1;
+C --> R2;
+C --> R3;
 ```
-<hr>
 
-### Eager Loading
-- Will load all dependent entities
-  - Load instructor and all of their courses at once
+### Development Process: One-to-Many
+1. Prep Work - Define database tables
+2. Create Review class
 
-<hr>
-
-### Lazy Loading
-- will load main entity first
-  - then load dependent entities on demand
-- If Hibernate session is closed, and you attempt to retrieve lazy loading
-  - hibernate will throw exception
-- Technique on using lazy loading
-  - to retrieve lazy data, you need to open Hibernate session
-  - Retrieve lazy data using
-    - Option 1: session.get and call appropriate getter methods
-    - Option 2: Hibernate  query with HQL
-
-<hr>
-
-### Best Practice
-- Only load data when absolutely needed
-- prefer Lazy Loading instead of Eager Loading
-
-<hr>
-
-### Fetch Type
-- example code
-    ```java
-    
-    import javax.persistence.Entity;
-    import javax.persistence.FetchType;
-    import javax.persistence.OneToMany;
-    import javax.persistence.Table;
-    
-    @Entity
-    @Table(name = "instructor")
-    public class Instructor {
-        //..
-        @OneToMany(fetch = FetchType.LAZY, mappedBy = "instructor")
-        private List<Course> courses;
-        //..
+*review db*
+```mermaid
+erDiagram
+    review
+    review {
+        int id
+        string comment
+        int course_id
     }
-    
-    ```
-- Default Fetch Types
 
-| Mapping     | Default Fetch Types |
-|-------------|---------------------|
-| @OneToOne   | FetchType.EAGER     |
-| @OneToMany  | FetchType.LAZY      |
-| @ManyToOne  | FetchType.EAGER     |
-| @ManyToMany | FetchType.LAZY     |
+```
+*Review java class*
+
+```java
+import javax.persistence.*;
+
+@Entity
+@Table(name = "review")
+public class Review {
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "id")
+  private int id;
+  
+  @Column(name = "comment")
+  private String comment;
+}
+```
+
+3. Update Course class
+
+```java
+import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "course")
+public class Course {
+  @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+  @JoinColumn(name = "course_id")
+  private List<Review> reviews;
+}
+
+  ///...
+  public void add(Review tempReview) {
+    if (reviews == null) {
+      tempReview = new ArrayList<>();
+    }
+    reviews.add(tempReview);
+  }
+```
+4. Create Main App
+```
+  public static void main(String[] args){
+  
+    // get the course object
+    int theId = 10;
+    Course tempCourse = session.get(Course.class, theId);
+    
+    //print the course
+    System.out.println("tempCourse: "+tempCourse);
+    
+    // print the associated reviews
+    System.out.println("reviews: "+tempCourse.getReviews());
+  }
+```
