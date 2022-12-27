@@ -1,12 +1,11 @@
 package demo;
 
-import entity.Instructor;
-import entity.InstructorDetail;
+import entity.*;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
-public class DeleteDemo {
+public class DeleteMaryStudentDemo {
 
     public static void main(String[] args) {
 
@@ -15,6 +14,9 @@ public class DeleteDemo {
                 .configure("hibernate.cfg.xml")
                 .addAnnotatedClass(Instructor.class)
                 .addAnnotatedClass(InstructorDetail.class)
+                .addAnnotatedClass(Course.class)
+                .addAnnotatedClass(Review.class)
+                .addAnnotatedClass(Student.class)
                 .buildSessionFactory();
 
         //create session
@@ -25,28 +27,23 @@ public class DeleteDemo {
           //start a transaction
             session.beginTransaction();
 
-            //get instructor by primary key / id
-            int theId = 2;
-            Instructor tempInstructor =
-                    session.get(Instructor.class, theId);
+            //get the student mary from database
+            int studentId = 2;
+            Student tempStudent = session.get(Student.class, studentId);
 
-            System.out.println("Found Instructpr: "+tempInstructor);
+            System.out.println("\nLoaded student: "+tempStudent);
+            System.out.println("Courses: "+tempStudent.getCourses());
 
-            //delete the instructors
-            if(tempInstructor != null){
-                System.out.println("Deleting "+tempInstructor);
-
-                //Note: this will also delete associated 'details" object
-                //because of CascadeType.ALL
-                //
-                session.delete(tempInstructor);
-            }
+            //delete student
+            System.out.println("Deleting student "+tempStudent);
+            session.delete(tempStudent);
 
             //commit transaction
             session.getTransaction().commit();
 
             System.out.println("Done");
         }finally {
+            session.close();
             factory.close();
         }
 

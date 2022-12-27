@@ -1,85 +1,59 @@
-## Hibernate Mapping - One to Many Mapping Unidirectional Mapping
+## Hibernate Mapping - Many to Many
 
 ### Overview
-- A course can have many reviews
-  - Uni Directional
-```mermaid
-flowchart LR;
-C([Course]);R1([Review]);R2([Review]);R3([Review]);
-C --> R1;
-C --> R2;
-C --> R3;
-```
+- Many to Many mapping
+  - A course can have many students
+  - A students can have many courses
+  ```mermaid
+    flowchart LR;
+    C1([Course]);C2([Course]);C3([Course]);C4([Course]);
+    S1([Student]);S3([Student]);S4([Student]);
+    C1 --> S1;
+    C2 --> S1;
+    C2 --> S3;
+    C3 --> S4;
+    C4 --> S3;
+    C4 --> S4;
+  ```
+- Join Table
+  - A table that provides a mapping between two tables.
+  - It has foreign keys for each table to define the mapping relationships
 
-### Development Process: One-to-Many
+### Development process: Many to Many
 1. Prep Work - Define database tables
-2. Create Review class
-
-*review db*
-```mermaid
-erDiagram
-    review
-    review {
-        int id
-        string comment
-        int course_id
-    }
-
+2. Update Course class
 ```
-*Review java class*
-
-```java
-import javax.persistence.*;
-
 @Entity
-@Table(name = "review")
-public class Review {
-
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "id")
-  private int id;
+@Table(name="course")
+public static class Course{
+  //...
   
-  @Column(name = "comment")
-  private String comment;
+  @ManyToMany
+  @JoinTable(
+    name = "course_student",
+    joinColumns = @JoinColumn(name="course_id"),
+    inverseJoinColumn=@JoinColumn(name="student_id")
+  )
+  private List<Student> students;
+  //getter / setter
+  
+  //...
 }
 ```
-
-3. Update Course class
-
-```java
-import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
-
+3. Update Student class
+```
 @Entity
-@Table(name = "course")
-public class Course {
-  @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-  @JoinColumn(name = "course_id")
-  private List<Review> reviews;
+@Table(name="student")
+public class Student{
+  //....
+  @ManyToMany
+  @JoinTable(
+    name="course_student",
+    joinColumns = @JoinColumn(name="student_id"),
+    inverseJoinColumn=@JoinColumn(name="course_id")
+  )
+  private List<Course> courses;
+  //....
 }
-
-  ///...
-  public void add(Review tempReview) {
-    if (reviews == null) {
-      tempReview = new ArrayList<>();
-    }
-    reviews.add(tempReview);
-  }
 ```
 4. Create Main App
-```
-  public static void main(String[] args){
-  
-    // get the course object
-    int theId = 10;
-    Course tempCourse = session.get(Course.class, theId);
-    
-    //print the course
-    System.out.println("tempCourse: "+tempCourse);
-    
-    // print the associated reviews
-    System.out.println("reviews: "+tempCourse.getReviews());
-  }
-```

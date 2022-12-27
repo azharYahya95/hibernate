@@ -1,12 +1,11 @@
 package demo;
 
-import entity.Instructor;
-import entity.InstructorDetail;
+import entity.*;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
-public class GetInstructorDetailDemo {
+public class DeletePacmanCourseDemo {
 
     public static void main(String[] args) {
 
@@ -15,6 +14,9 @@ public class GetInstructorDetailDemo {
                 .configure("hibernate.cfg.xml")
                 .addAnnotatedClass(Instructor.class)
                 .addAnnotatedClass(InstructorDetail.class)
+                .addAnnotatedClass(Course.class)
+                .addAnnotatedClass(Review.class)
+                .addAnnotatedClass(Student.class)
                 .buildSessionFactory();
 
         //create session
@@ -25,24 +27,19 @@ public class GetInstructorDetailDemo {
           //start a transaction
             session.beginTransaction();
 
-            //get the instructor detail object
-            int theId = 2;
-            InstructorDetail tempInstructorDetail =
-                    session.get(InstructorDetail.class, theId);
+            // get the pacman course from db
+            int courseId = 10;
+            Course tempCourse = session.get(Course.class, courseId);
 
-            //print the instructor detail
-            System.out.println("tempInstructorDetail: "+ tempInstructorDetail);
-
-            //print the associated instructor
-            System.out.println("the associated instructor: "+tempInstructorDetail.getInstructor());
+            //delete the course
+            System.out.println("Deleting the course: "+tempCourse);
+            session.delete(tempCourse);
 
             //commit transaction
             session.getTransaction().commit();
 
             System.out.println("Done");
-        }catch (Exception ex){
-          ex.printStackTrace();
-        } finally {
+        }finally {
             session.close();
             factory.close();
         }
